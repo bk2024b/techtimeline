@@ -14,6 +14,46 @@ function parseDestinations(raw: string): string[] {
     .filter(Boolean);
 }
 
+type SupabaseClient = ReturnType<typeof createServerClient>;
+
+async function slugsFor(
+  supabase: SupabaseClient,
+  table: "categories" | "brands" | "tags",
+  ids: string[]
+): Promise<string[]> {
+  if (ids.length === 0) return [];
+  const { data } = await supabase.from(table).select("slug").in("id", ids);
+  return (data ?? []).map((row) => row.slug as string);
+}
+
+async function syncRelations(
+  supabase: SupabaseClient,
+  articleId: string,
+  categoryIds: string[],
+  brandIds: string[],
+  tagIds: string[]
+) {
+  await supabase.from("article_categories").delete().eq("article_id", articleId);
+  await supabase.from("article_brands").delete().eq("article_id", articleId);
+  await supabase.from("article_tags").delete().eq("article_id", articleId);
+
+  if (categoryIds.length) {
+    await supabase
+      .from("article_categories")
+      .insert(categoryIds.map((category_id) => ({ article_id: articleId, category_id })));
+  }
+  if (brandIds.length) {
+    await supabase
+      .from("article_brands")
+      .insert(brandIds.map((brand_id) => ({ article_id: articleId, brand_id })));
+  }
+  if (tagIds.length) {
+    await supabase
+      .from("article_tags")
+      .insert(tagIds.map((tag_id) => ({ article_id: articleId, tag_id })));
+  }
+}
+
 export async function createArticle(formData: FormData) {
   const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
@@ -30,6 +70,16 @@ export async function createArticle(formData: FormData) {
   const destinations = parseDestinations(formData.get("destinations") as string);
   const coverImage = (formData.get("cover_image") as string) || null;
 
+  const categoryIds = formData.getAll("category_ids") as string[];
+  const brandIds = formData.getAll("brand_ids") as string[];
+  const tagIds = formData.getAll("tag_ids") as string[];
+
+  const [categorySlugs, brandSlugs, tagSlugs] = await Promise.all([
+    slugsFor(supabase, "categories", categoryIds),
+    slugsFor(supabase, "brands", brandIds),
+    slugsFor(supabase, "tags", tagIds),
+  ]);
+
   const { data, error } = await supabase
     .from("articles")
     .insert({
@@ -42,6 +92,9 @@ export async function createArticle(formData: FormData) {
       author_id: user.id,
       destinations,
       cover_image: coverImage,
+      category_slugs: categorySlugs,
+      brand_slugs: brandSlugs,
+      tag_slugs: tagSlugs,
       published_at: status === "published" ? new Date().toISOString() : null,
     })
     .select("id")
@@ -50,6 +103,8 @@ export async function createArticle(formData: FormData) {
   if (error) {
     redirect(`/articles/new?error=${encodeURIComponent(error.message)}`);
   }
+
+  await syncRelations(supabase, data.id, categoryIds, brandIds, tagIds);
 
   revalidatePath("/articles");
   redirect(`/articles/${data.id}/edit`);
@@ -66,6 +121,16 @@ export async function updateArticle(articleId: string, formData: FormData) {
   const destinations = parseDestinations(formData.get("destinations") as string);
   const coverImage = (formData.get("cover_image") as string) || null;
 
+  const categoryIds = formData.getAll("category_ids") as string[];
+  const brandIds = formData.getAll("brand_ids") as string[];
+  const tagIds = formData.getAll("tag_ids") as string[];
+
+  const [categorySlugs, brandSlugs, tagSlugs] = await Promise.all([
+    slugsFor(supabase, "categories", categoryIds),
+    slugsFor(supabase, "brands", brandIds),
+    slugsFor(supabase, "tags", tagIds),
+  ]);
+
   const { error } = await supabase
     .from("articles")
     .update({
@@ -77,6 +142,9 @@ export async function updateArticle(articleId: string, formData: FormData) {
       status,
       destinations,
       cover_image: coverImage,
+      category_slugs: categorySlugs,
+      brand_slugs: brandSlugs,
+      tag_slugs: tagSlugs,
       published_at: status === "published" ? new Date().toISOString() : null,
     })
     .eq("id", articleId);
@@ -84,6 +152,8 @@ export async function updateArticle(articleId: string, formData: FormData) {
   if (error) {
     redirect(`/articles/${articleId}/edit?error=${encodeURIComponent(error.message)}`);
   }
+
+  await syncRelations(supabase, articleId, categoryIds, brandIds, tagIds);
 
   revalidatePath("/articles");
   redirect(`/articles/${articleId}/edit?saved=1`);

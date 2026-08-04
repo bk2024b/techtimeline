@@ -4,14 +4,64 @@ import { useState } from "react";
 import { uploadCoverImage } from "./actions";
 import type { Article } from "@techtimeline/types";
 
+type Option = { id: string; name: string };
+
 type ArticleFormProps = {
   action: (formData: FormData) => void;
   article?: Partial<Article>;
+  categories: Option[];
+  brands: Option[];
+  tags: Option[];
+  selectedCategoryIds?: string[];
+  selectedBrandIds?: string[];
+  selectedTagIds?: string[];
   error?: string;
   saved?: boolean;
 };
 
-export function ArticleForm({ action, article, error, saved }: ArticleFormProps) {
+function CheckboxGroup({
+  name,
+  options,
+  selected,
+}: {
+  name: string;
+  options: Option[];
+  selected: string[];
+}) {
+  if (options.length === 0) {
+    return <p className="text-xs text-neutral-400">Aucune option — crée-les d'abord dans la page dédiée.</p>;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-3">
+      {options.map((opt) => (
+        <label key={opt.id} className="flex items-center gap-1.5 text-sm">
+          <input
+            type="checkbox"
+            name={name}
+            value={opt.id}
+            defaultChecked={selected.includes(opt.id)}
+            className="rounded border-neutral-300"
+          />
+          {opt.name}
+        </label>
+      ))}
+    </div>
+  );
+}
+
+export function ArticleForm({
+  action,
+  article,
+  categories,
+  brands,
+  tags,
+  selectedCategoryIds = [],
+  selectedBrandIds = [],
+  selectedTagIds = [],
+  error,
+  saved,
+}: ArticleFormProps) {
   const [coverImage, setCoverImage] = useState<string | null>(article?.coverImage ?? null);
   const [uploading, setUploading] = useState(false);
 
@@ -92,6 +142,21 @@ export function ArticleForm({ action, article, error, saved }: ArticleFormProps)
           placeholder="phonetimeline, earbudstimeline"
           className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
         />
+      </div>
+
+      <div className="space-y-1">
+        <label className="text-sm font-medium">Catégories</label>
+        <CheckboxGroup name="category_ids" options={categories} selected={selectedCategoryIds} />
+      </div>
+
+      <div className="space-y-1">
+        <label className="text-sm font-medium">Marques</label>
+        <CheckboxGroup name="brand_ids" options={brands} selected={selectedBrandIds} />
+      </div>
+
+      <div className="space-y-1">
+        <label className="text-sm font-medium">Tags</label>
+        <CheckboxGroup name="tag_ids" options={tags} selected={selectedTagIds} />
       </div>
 
       <div className="space-y-1">
