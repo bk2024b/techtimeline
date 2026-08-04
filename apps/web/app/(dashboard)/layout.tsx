@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createServerClient } from "@techtimeline/database";
@@ -40,6 +41,13 @@ export default async function DashboardLayout({
           </form>
         </div>
       </header>
+      <nav className="flex gap-4 border-b border-neutral-200 bg-white px-6 py-2 text-sm text-neutral-600">
+        <Link href="/" className="hover:text-neutral-900">Tableau de bord</Link>
+        <Link href="/articles" className="hover:text-neutral-900">Articles</Link>
+        <Link href="/categories" className="hover:text-neutral-900">Catégories</Link>
+        <Link href="/brands" className="hover:text-neutral-900">Marques</Link>
+        <Link href="/tags" className="hover:text-neutral-900">Tags</Link>
+      </nav>
       {children}
     </div>
   );
