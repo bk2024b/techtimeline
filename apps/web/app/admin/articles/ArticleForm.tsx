@@ -159,6 +159,52 @@ export function ArticleForm({
         <CheckboxGroup name="tag_ids" options={tags} selected={selectedTagIds} />
       </div>
 
+      <div className="space-y-3 rounded-md border border-neutral-200 p-4">
+        <p className="text-sm font-medium">SEO</p>
+
+        <div className="space-y-1">
+          <label className="text-xs text-neutral-500">Titre SEO</label>
+          <input
+            name="seo_title"
+            defaultValue={article?.seo?.title}
+            placeholder="Si vide, le titre de l'article sera utilisé"
+            className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-xs text-neutral-500">Meta description</label>
+          <textarea
+            name="seo_meta_description"
+            defaultValue={article?.seo?.metaDescription}
+            rows={2}
+            maxLength={160}
+            className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <label className="text-xs text-neutral-500">Canonical URL</label>
+            <input
+              name="seo_canonical"
+              defaultValue={article?.seo?.canonical}
+              placeholder="https://techtimeline.com/articles/..."
+              className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs text-neutral-500">OG image</label>
+            <input
+              name="seo_og_image"
+              defaultValue={article?.seo?.ogImage}
+              placeholder="Si vide, l'image de couverture sera utilisée"
+              className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+            />
+          </div>
+        </div>
+      </div>
+
       <div className="space-y-1">
         <label className="text-sm font-medium">Image de couverture</label>
         <input type="file" accept="image/*" onChange={handleFileChange} className="text-sm" />

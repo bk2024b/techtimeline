@@ -17,7 +17,7 @@ export default async function ArticlesListPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Articles</h1>
         <Link
-          href="/articles/new"
+          href="/admin/articles/new"
           className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800"
         >
           Nouvel article

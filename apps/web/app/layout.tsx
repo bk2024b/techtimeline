@@ -1,8 +1,8 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "TechTimeline — Dashboard",
-  description: "Administration éditoriale de l'écosystème Timeline",
+  title: "TechTimeline",
+  description: "Explore the evolution of technology.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

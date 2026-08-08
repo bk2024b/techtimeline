@@ -28,7 +28,9 @@ export default async function EditArticlePage({
   ] = await Promise.all([
     supabase
       .from("articles")
-      .select("id, title, content, type, status, destinations, cover_image")
+      .select(
+        "id, title, content, type, status, destinations, cover_image, seo_title, seo_meta_description, seo_canonical, seo_og_image"
+      )
       .eq("id", id)
       .single(),
     supabase.from("categories").select("id, name").order("name"),
@@ -55,6 +57,12 @@ export default async function EditArticlePage({
           status: article.status,
           destinations: article.destinations,
           coverImage: article.cover_image,
+          seo: {
+            title: article.seo_title ?? "",
+            metaDescription: article.seo_meta_description ?? "",
+            canonical: article.seo_canonical ?? "",
+            ogImage: article.seo_og_image ?? "",
+          },
         }}
         error={error}
         saved={saved === "1"}

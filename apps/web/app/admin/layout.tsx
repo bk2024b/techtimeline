@@ -4,6 +4,11 @@ import { redirect } from "next/navigation";
 import { createServerClient } from "@techtimeline/database";
 import { signOut } from "../login/actions";
 
+export const metadata = {
+  title: "TechTimeline — Admin",
+  description: "Administration éditoriale de l'écosystème Timeline",
+};
+
 export default async function DashboardLayout({
   children,
 }: {
@@ -42,11 +47,11 @@ export default async function DashboardLayout({
         </div>
       </header>
       <nav className="flex gap-4 border-b border-neutral-200 bg-white px-6 py-2 text-sm text-neutral-600">
-        <Link href="/" className="hover:text-neutral-900">Tableau de bord</Link>
-        <Link href="/articles" className="hover:text-neutral-900">Articles</Link>
-        <Link href="/categories" className="hover:text-neutral-900">Catégories</Link>
-        <Link href="/brands" className="hover:text-neutral-900">Marques</Link>
-        <Link href="/tags" className="hover:text-neutral-900">Tags</Link>
+        <Link href="/admin" className="hover:text-neutral-900">Tableau de bord</Link>
+        <Link href="/admin/articles" className="hover:text-neutral-900">Articles</Link>
+        <Link href="/admin/categories" className="hover:text-neutral-900">Catégories</Link>
+        <Link href="/admin/brands" className="hover:text-neutral-900">Marques</Link>
+        <Link href="/admin/tags" className="hover:text-neutral-900">Tags</Link>
       </nav>
       {children}
     </div>
