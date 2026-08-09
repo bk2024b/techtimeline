@@ -5,20 +5,20 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createServerClient } from "@techtimeline/database";
 import { slugify, excerptFromMarkdown } from "@techtimeline/lib";
+import { assertRole, ForbiddenError } from "@techtimeline/auth";
 import type { ArticleStatus, ContentType } from "@techtimeline/types";
 
-function parseDestinations(raw: string): string[] {
-  return raw
-    .split(",")
-    .map((d) => d.trim().toLowerCase())
-    .filter(Boolean);
-}
+// Note : plus de champ "destinations" texte libre dans le formulaire
+// (remplacé par les checkboxes timelines) — la colonne legacy
+// articles.destinations est maintenant dérivée automatiquement des
+// timelines cochées, cf. deriveDestinationSlugs ci-dessous. Gardée en
+// écriture jusqu'à dépréciation complète (Phase 9).
 
 type SupabaseClient = ReturnType<typeof createServerClient>;
 
 async function slugsFor(
   supabase: SupabaseClient,
-  table: "categories" | "brands" | "tags",
+  table: "categories" | "brands" | "tags" | "timelines",
   ids: string[]
 ): Promise<string[]> {
   if (ids.length === 0) return [];
@@ -54,6 +54,96 @@ async function syncRelations(
   }
 }
 
+// Même pattern delete+insert que syncRelations, pour les 3 nouvelles
+// tables de jointure de la Phase 2 (pas de slugs dénormalisés ici,
+// contrairement à category/brand/tag).
+async function syncExtendedRelations(
+  supabase: SupabaseClient,
+  articleId: string,
+  productIds: string[],
+  technologyIds: string[],
+  topicIds: string[],
+  relatedIds: string[]
+) {
+  await supabase.from("article_products").delete().eq("article_id", articleId);
+  await supabase.from("article_technologies").delete().eq("article_id", articleId);
+  await supabase.from("article_topics").delete().eq("article_id", articleId);
+  await supabase.from("article_relations").delete().eq("article_id", articleId);
+
+  if (productIds.length) {
+    await supabase
+      .from("article_products")
+      .insert(productIds.map((product_id) => ({ article_id: articleId, product_id })));
+  }
+  if (technologyIds.length) {
+    await supabase
+      .from("article_technologies")
+      .insert(technologyIds.map((technology_id) => ({ article_id: articleId, technology_id })));
+  }
+  if (topicIds.length) {
+    await supabase
+      .from("article_topics")
+      .insert(topicIds.map((topic_id) => ({ article_id: articleId, topic_id })));
+  }
+  // related_article_id = articleId serait rejeté par le check en base
+  // (article_id <> related_article_id) — filtré ici pour éviter un
+  // insert qui échouerait silencieusement sur cette seule ligne.
+  const filteredRelated = relatedIds.filter((id) => id !== articleId);
+  if (filteredRelated.length) {
+    await supabase
+      .from("article_relations")
+      .insert(filteredRelated.map((related_article_id) => ({ article_id: articleId, related_article_id })));
+  }
+}
+
+// Distribution vers les timelines actives, même logique que
+// /admin/publications/actions.ts (dupliquée volontairement : contexte
+// et cible de redirection différents, pas assez de logique partagée
+// pour justifier un import croisé entre les deux dossiers d'actions).
+async function syncPublicationsForArticle(
+  supabase: SupabaseClient,
+  articleId: string,
+  timelineIds: string[]
+) {
+  const { data: activeTimelines } = await supabase
+    .from("timelines")
+    .select("id")
+    .eq("status", "active");
+
+  const checked = new Set(timelineIds);
+
+  for (const t of activeTimelines ?? []) {
+    const shouldBePublished = checked.has(t.id);
+
+    const { data: existing } = await supabase
+      .from("publications")
+      .select("id, status")
+      .eq("article_id", articleId)
+      .eq("timeline_id", t.id)
+      .maybeSingle();
+
+    if (shouldBePublished) {
+      if (existing) {
+        if (existing.status !== "published") {
+          await supabase
+            .from("publications")
+            .update({ status: "published", published_at: new Date().toISOString() })
+            .eq("id", existing.id);
+        }
+      } else {
+        await supabase.from("publications").insert({
+          article_id: articleId,
+          timeline_id: t.id,
+          status: "published",
+          published_at: new Date().toISOString(),
+        });
+      }
+    } else if (existing && existing.status === "published") {
+      await supabase.from("publications").update({ status: "archived" }).eq("id", existing.id);
+    }
+  }
+}
+
 export async function createArticle(formData: FormData) {
   const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
@@ -67,7 +157,6 @@ export async function createArticle(formData: FormData) {
   const content = formData.get("content") as string;
   const type = formData.get("type") as ContentType;
   const status = formData.get("status") as ArticleStatus;
-  const destinations = parseDestinations(formData.get("destinations") as string);
   const coverImage = (formData.get("cover_image") as string) || null;
 
   const seoTitle = (formData.get("seo_title") as string) || null;
@@ -78,11 +167,17 @@ export async function createArticle(formData: FormData) {
   const categoryIds = formData.getAll("category_ids") as string[];
   const brandIds = formData.getAll("brand_ids") as string[];
   const tagIds = formData.getAll("tag_ids") as string[];
+  const timelineIds = formData.getAll("timeline_ids") as string[];
+  const productIds = formData.getAll("product_ids") as string[];
+  const technologyIds = formData.getAll("technology_ids") as string[];
+  const topicIds = formData.getAll("topic_ids") as string[];
+  const relatedIds = formData.getAll("related_ids") as string[];
 
-  const [categorySlugs, brandSlugs, tagSlugs] = await Promise.all([
+  const [categorySlugs, brandSlugs, tagSlugs, destinations] = await Promise.all([
     slugsFor(supabase, "categories", categoryIds),
     slugsFor(supabase, "brands", brandIds),
     slugsFor(supabase, "tags", tagIds),
+    slugsFor(supabase, "timelines", timelineIds),
   ]);
 
   const { data, error } = await supabase
@@ -114,6 +209,8 @@ export async function createArticle(formData: FormData) {
   }
 
   await syncRelations(supabase, data.id, categoryIds, brandIds, tagIds);
+  await syncExtendedRelations(supabase, data.id, productIds, technologyIds, topicIds, relatedIds);
+  await syncPublicationsForArticle(supabase, data.id, timelineIds);
 
   revalidatePath("/admin/articles");
   redirect(`/admin/articles/${data.id}/edit`);
@@ -127,7 +224,6 @@ export async function updateArticle(articleId: string, formData: FormData) {
   const content = formData.get("content") as string;
   const type = formData.get("type") as ContentType;
   const status = formData.get("status") as ArticleStatus;
-  const destinations = parseDestinations(formData.get("destinations") as string);
   const coverImage = (formData.get("cover_image") as string) || null;
 
   const seoTitle = (formData.get("seo_title") as string) || null;
@@ -138,11 +234,17 @@ export async function updateArticle(articleId: string, formData: FormData) {
   const categoryIds = formData.getAll("category_ids") as string[];
   const brandIds = formData.getAll("brand_ids") as string[];
   const tagIds = formData.getAll("tag_ids") as string[];
+  const timelineIds = formData.getAll("timeline_ids") as string[];
+  const productIds = formData.getAll("product_ids") as string[];
+  const technologyIds = formData.getAll("technology_ids") as string[];
+  const topicIds = formData.getAll("topic_ids") as string[];
+  const relatedIds = formData.getAll("related_ids") as string[];
 
-  const [categorySlugs, brandSlugs, tagSlugs] = await Promise.all([
+  const [categorySlugs, brandSlugs, tagSlugs, destinations] = await Promise.all([
     slugsFor(supabase, "categories", categoryIds),
     slugsFor(supabase, "brands", brandIds),
     slugsFor(supabase, "tags", tagIds),
+    slugsFor(supabase, "timelines", timelineIds),
   ]);
 
   const { error } = await supabase
@@ -172,6 +274,8 @@ export async function updateArticle(articleId: string, formData: FormData) {
   }
 
   await syncRelations(supabase, articleId, categoryIds, brandIds, tagIds);
+  await syncExtendedRelations(supabase, articleId, productIds, technologyIds, topicIds, relatedIds);
+  await syncPublicationsForArticle(supabase, articleId, timelineIds);
 
   revalidatePath("/admin/articles");
   redirect(`/admin/articles/${articleId}/edit?saved=1`);
@@ -181,7 +285,28 @@ export async function deleteArticle(articleId: string) {
   const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
 
-  await supabase.from("articles").delete().eq("id", articleId);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  try {
+    // Les RLS (articles_staff_delete) l'exigeaient déjà côté DB, mais un
+    // writer qui cliquait "Supprimer" n'avait aucun retour : l'insert
+    // échouait silencieusement (erreur jamais vérifiée). Ici on prévient
+    // avant, avec un message clair.
+    await assertRole(user.id, "editor");
+  } catch (e) {
+    if (e instanceof ForbiddenError) {
+      redirect(`/admin/articles/${articleId}/edit?error=forbidden`);
+    }
+    throw e;
+  }
+
+  const { error } = await supabase.from("articles").delete().eq("id", articleId);
+  if (error) {
+    redirect(`/admin/articles/${articleId}/edit?error=${encodeURIComponent(error.message)}`);
+  }
 
   revalidatePath("/admin/articles");
   redirect("/admin/articles");

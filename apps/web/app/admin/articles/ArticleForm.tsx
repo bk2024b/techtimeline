@@ -12,9 +12,19 @@ type ArticleFormProps = {
   categories: Option[];
   brands: Option[];
   tags: Option[];
+  timelines: Option[];
+  products: Option[];
+  technologies: Option[];
+  topics: Option[];
+  otherArticles: Option[];
   selectedCategoryIds?: string[];
   selectedBrandIds?: string[];
   selectedTagIds?: string[];
+  selectedTimelineIds?: string[];
+  selectedProductIds?: string[];
+  selectedTechnologyIds?: string[];
+  selectedTopicIds?: string[];
+  selectedRelatedIds?: string[];
   error?: string;
   saved?: boolean;
 };
@@ -56,9 +66,19 @@ export function ArticleForm({
   categories,
   brands,
   tags,
+  timelines,
+  products,
+  technologies,
+  topics,
+  otherArticles,
   selectedCategoryIds = [],
   selectedBrandIds = [],
   selectedTagIds = [],
+  selectedTimelineIds = [],
+  selectedProductIds = [],
+  selectedTechnologyIds = [],
+  selectedTopicIds = [],
+  selectedRelatedIds = [],
   error,
   saved,
 }: ArticleFormProps) {
@@ -135,13 +155,12 @@ export function ArticleForm({
       </div>
 
       <div className="space-y-1">
-        <label className="text-sm font-medium">Destinations (séparées par des virgules)</label>
-        <input
-          name="destinations"
-          defaultValue={article?.destinations?.join(", ")}
-          placeholder="phonetimeline, earbudstimeline"
-          className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
-        />
+        <label className="text-sm font-medium">Distribution (timelines)</label>
+        <p className="text-xs text-neutral-400">
+          Coché = publié sur cette timeline. Décocher archive la
+          publication (ne supprime rien) — voir aussi /admin/publications.
+        </p>
+        <CheckboxGroup name="timeline_ids" options={timelines} selected={selectedTimelineIds} />
       </div>
 
       <div className="space-y-1">
@@ -157,6 +176,48 @@ export function ArticleForm({
       <div className="space-y-1">
         <label className="text-sm font-medium">Tags</label>
         <CheckboxGroup name="tag_ids" options={tags} selected={selectedTagIds} />
+      </div>
+
+      <div className="space-y-1">
+        <label className="text-sm font-medium">Produits</label>
+        <CheckboxGroup name="product_ids" options={products} selected={selectedProductIds} />
+      </div>
+
+      <div className="space-y-1">
+        <label className="text-sm font-medium">Technologies</label>
+        <CheckboxGroup
+          name="technology_ids"
+          options={technologies}
+          selected={selectedTechnologyIds}
+        />
+      </div>
+
+      <div className="space-y-1">
+        <label className="text-sm font-medium">Topics</label>
+        <CheckboxGroup name="topic_ids" options={topics} selected={selectedTopicIds} />
+      </div>
+
+      <div className="space-y-1">
+        <label className="text-sm font-medium">Articles liés</label>
+        {otherArticles.length === 0 ? (
+          <p className="text-xs text-neutral-400">
+            Aucun autre article disponible pour l&apos;instant.
+          </p>
+        ) : (
+          <select
+            name="related_ids"
+            multiple
+            defaultValue={selectedRelatedIds}
+            size={Math.min(6, otherArticles.length)}
+            className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+          >
+            {otherArticles.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
 
       <div className="space-y-3 rounded-md border border-neutral-200 p-4">
