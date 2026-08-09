@@ -1,8 +1,8 @@
 import { cookies } from "next/headers";
 import { createServerClient } from "@techtimeline/database";
-import { createBrand, updateBrand, deleteBrand } from "./actions";
+import { createTopic, updateTopic, deleteTopic } from "./actions";
 
-export default async function BrandsPage({
+export default async function TopicsPage({
   searchParams,
 }: {
   searchParams: Promise<{ error?: string }>;
@@ -10,14 +10,14 @@ export default async function BrandsPage({
   const { error } = await searchParams;
   const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
-  const { data: brands } = await supabase
-    .from("brands")
-    .select("id, name, slug, logo")
+  const { data: items } = await supabase
+    .from("topics")
+    .select("id, name, slug, description")
     .order("name");
 
   return (
     <main className="mx-auto max-w-2xl p-8">
-      <h1 className="text-2xl font-semibold">Marques</h1>
+      <h1 className="text-2xl font-semibold">Topics</h1>
 
       {error && (
         <p className="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -27,16 +27,16 @@ export default async function BrandsPage({
         </p>
       )}
 
-      <form action={createBrand} className="mt-6 flex gap-2">
+      <form action={createTopic} className="mt-6 flex gap-2">
         <input
           name="name"
-          placeholder="Ex: Apple"
+          placeholder="Ex"
           required
           className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-sm"
         />
         <input
-          name="logo"
-          placeholder="URL du logo (optionnel)"
+          name="description"
+          placeholder="Description (optionnel)"
           className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-sm"
         />
         <button
@@ -48,30 +48,29 @@ export default async function BrandsPage({
       </form>
 
       <ul className="mt-6 divide-y divide-neutral-200 rounded-lg border border-neutral-200 bg-white">
-        {brands?.length ? (
-          brands.map((b) => (
-            <li key={b.id} className="flex items-center justify-between gap-3 px-4 py-3">
+        {items?.length ? (
+          items.map((item) => (
+            <li key={item.id} className="flex items-center justify-between gap-3 px-4 py-3">
               <form
-                action={updateBrand.bind(null, b.id)}
+                action={updateTopic.bind(null, item.id)}
                 className="flex flex-1 items-center gap-2"
               >
                 <input
                   name="name"
-                  defaultValue={b.name}
+                  defaultValue={item.name}
                   className="w-40 rounded-md border border-neutral-200 px-2 py-1 text-sm"
                 />
                 <input
-                  name="logo"
-                  defaultValue={b.logo ?? ""}
-                  placeholder="URL du logo"
+                  name="description"
+                  defaultValue={item.description ?? ""}
                   className="flex-1 rounded-md border border-neutral-200 px-2 py-1 text-sm"
                 />
-                <span className="text-xs text-neutral-400">/{b.slug}</span>
+                <span className="text-xs text-neutral-400">/{item.slug}</span>
                 <button type="submit" className="text-sm text-neutral-600 hover:underline">
                   Enregistrer
                 </button>
               </form>
-              <form action={deleteBrand.bind(null, b.id)}>
+              <form action={deleteTopic.bind(null, item.id)}>
                 <button type="submit" className="text-sm text-red-600 hover:underline">
                   Supprimer
                 </button>
@@ -79,7 +78,7 @@ export default async function BrandsPage({
             </li>
           ))
         ) : (
-          <li className="px-4 py-6 text-sm text-neutral-500">Aucune marque.</li>
+          <li className="px-4 py-6 text-sm text-neutral-500">Aucun élément.</li>
         )}
       </ul>
     </main>

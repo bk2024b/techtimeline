@@ -22,3 +22,21 @@ export async function getProfileRole(userId: string): Promise<UserRole | null> {
   if (error || !data) return null;
   return data.role as UserRole;
 }
+
+// À appeler en tête des server actions de mutation sensibles (delete,
+// publish, gestion des timelines/publications...). Complète les RLS
+// (qui bloquent déjà l'écriture côté DB) par une vérification explicite
+// côté application, avec un message d'erreur clair plutôt qu'un échec
+// silencieux de l'insert/update.
+export class ForbiddenError extends Error {
+  constructor() {
+    super("forbidden");
+  }
+}
+
+export async function assertRole(userId: string, required: UserRole): Promise<void> {
+  const role = await getProfileRole(userId);
+  if (!role || !hasRole(role, required)) {
+    throw new ForbiddenError();
+  }
+}

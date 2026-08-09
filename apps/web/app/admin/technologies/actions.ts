@@ -14,8 +14,9 @@ async function currentUserId(supabase: ReturnType<typeof createServerClient>) {
   return user?.id ?? null;
 }
 
-export async function createCategory(formData: FormData) {
+export async function createTechnology(formData: FormData) {
   const name = formData.get("name") as string;
+  const description = (formData.get("description") as string) || null;
   const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
 
@@ -25,18 +26,19 @@ export async function createCategory(formData: FormData) {
   try {
     await assertRole(userId, "editor");
   } catch (e) {
-    if (e instanceof ForbiddenError) redirect("/admin/categories?error=forbidden");
+    if (e instanceof ForbiddenError) redirect("/admin/technologies?error=forbidden");
     throw e;
   }
 
-  const { error } = await supabase.from("categories").insert({ name, slug: slugify(name) });
-  if (error) redirect(`/admin/categories?error=${encodeURIComponent(error.message)}`);
+  const { error } = await supabase.from("technologies").insert({ name, slug: slugify(name), description });
+  if (error) redirect(`/admin/technologies?error=${encodeURIComponent(error.message)}`);
 
-  revalidatePath("/admin/categories");
+  revalidatePath("/admin/technologies");
 }
 
-export async function updateCategory(id: string, formData: FormData) {
+export async function updateTechnology(id: string, formData: FormData) {
   const name = formData.get("name") as string;
+  const description = (formData.get("description") as string) || null;
   const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
 
@@ -46,20 +48,20 @@ export async function updateCategory(id: string, formData: FormData) {
   try {
     await assertRole(userId, "editor");
   } catch (e) {
-    if (e instanceof ForbiddenError) redirect("/admin/categories?error=forbidden");
+    if (e instanceof ForbiddenError) redirect("/admin/technologies?error=forbidden");
     throw e;
   }
 
   const { error } = await supabase
-    .from("categories")
-    .update({ name, slug: slugify(name) })
+    .from("technologies")
+    .update({ name, slug: slugify(name), description })
     .eq("id", id);
-  if (error) redirect(`/admin/categories?error=${encodeURIComponent(error.message)}`);
+  if (error) redirect(`/admin/technologies?error=${encodeURIComponent(error.message)}`);
 
-  revalidatePath("/admin/categories");
+  revalidatePath("/admin/technologies");
 }
 
-export async function deleteCategory(id: string) {
+export async function deleteTechnology(id: string) {
   const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
 
@@ -69,15 +71,12 @@ export async function deleteCategory(id: string) {
   try {
     await assertRole(userId, "editor");
   } catch (e) {
-    if (e instanceof ForbiddenError) redirect("/admin/categories?error=forbidden");
+    if (e instanceof ForbiddenError) redirect("/admin/technologies?error=forbidden");
     throw e;
   }
 
-  // Une catégorie liée à des articles a des lignes article_categories en
-  // cascade (FK) — la suppression échoue proprement via la contrainte
-  // plutôt que de laisser des articles avec une référence fantôme.
-  const { error } = await supabase.from("categories").delete().eq("id", id);
-  if (error) redirect(`/admin/categories?error=${encodeURIComponent(error.message)}`);
+  const { error } = await supabase.from("technologies").delete().eq("id", id);
+  if (error) redirect(`/admin/technologies?error=${encodeURIComponent(error.message)}`);
 
-  revalidatePath("/admin/categories");
+  revalidatePath("/admin/technologies");
 }
