@@ -12,7 +12,7 @@ async function getArticle(slug: string) {
   const { data: article } = await supabase
     .from("articles")
     .select(
-      "id, title, content, excerpt, cover_image, type, published_at, seo_title, seo_meta_description, seo_canonical, seo_og_image"
+      "id, title, content, excerpt, cover_image, type, published_at, updated_at, seo_title, seo_meta_description, seo_canonical, seo_og_image"
     )
     .eq("slug", slug)
     .eq("status", "published")
@@ -56,6 +56,16 @@ export default async function ArticlePage({
 
   if (!article) notFound();
 
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: article.title,
+    description: article.seo_meta_description || article.excerpt || undefined,
+    image: article.seo_og_image || article.cover_image || undefined,
+    datePublished: article.published_at || undefined,
+    dateModified: article.updated_at || article.published_at || undefined,
+  };
+
   const [
     { data: categories },
     { data: brands },
@@ -86,6 +96,11 @@ export default async function ArticlePage({
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
+      <script
+        type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
       <span className="text-xs uppercase text-neutral-400">{article.type}</span>
       <h1 className="mt-1 text-3xl font-semibold">{article.title}</h1>
       {article.published_at && (

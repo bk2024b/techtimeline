@@ -50,8 +50,22 @@ export default async function ProductPage({
   const brand = Array.isArray(product.brands) ? product.brands[0] : product.brands;
   const category = Array.isArray(product.categories) ? product.categories[0] : product.categories;
 
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    releaseDate: product.released_at || undefined,
+    brand: brand ? { "@type": "Brand", name: brand.name } : undefined,
+    category: category?.name || undefined,
+  };
+
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
+      <script
+        type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+      />
       <div className="flex flex-wrap gap-2 text-sm">
         {brand && (
           <Link href={`/brands/${brand.slug}`} className="text-neutral-500 hover:underline">
