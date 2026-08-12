@@ -21,6 +21,9 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             <Link href="/topics" className="hover:text-neutral-900">
               Topics
             </Link>
+            <Link href="/search" className="hover:text-neutral-900">
+              Search
+            </Link>
           </nav>
         </div>
       </header>
