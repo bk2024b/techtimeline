@@ -32,7 +32,7 @@ export default async function DashboardLayout({
     .single();
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-neutral-50 font-sans text-neutral-900">
       <header className="flex items-center justify-between border-b border-neutral-200 bg-white px-6 py-3">
         <span className="font-semibold">TechTimeline</span>
         <div className="flex items-center gap-3 text-sm text-neutral-600">

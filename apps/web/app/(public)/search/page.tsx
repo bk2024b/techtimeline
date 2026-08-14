@@ -57,7 +57,7 @@ export default async function SearchPage({
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
-      <h1 className="text-2xl font-semibold">Search technology...</h1>
+      <h1 className="font-heading text-3xl font-semibold text-foreground">Search technology...</h1>
 
       <form action="/search" className="mt-6">
         <input
@@ -66,17 +66,17 @@ export default async function SearchPage({
           defaultValue={query ?? ""}
           placeholder="iPhone 15, Bluetooth, Apple..."
           autoFocus
-          className="w-full rounded-md border border-neutral-300 px-4 py-3 text-sm"
+          className="w-full rounded-md border border-white/15 bg-surface text-foreground placeholder:text-muted px-4 py-3 text-sm"
         />
       </form>
 
       {query && !hasResults && (
-        <p className="mt-8 text-sm text-neutral-500">Aucun résultat pour « {query} ».</p>
+        <p className="mt-8 text-sm text-muted">Aucun résultat pour « {query} ».</p>
       )}
 
       {articles.length > 0 && (
         <section className="mt-8">
-          <h2 className="text-xs font-medium uppercase tracking-wide text-neutral-400">
+          <h2 className="text-xs font-medium uppercase tracking-wide text-muted">
             Articles
           </h2>
           <ul className="mt-2 space-y-1">
@@ -93,7 +93,7 @@ export default async function SearchPage({
 
       {products.length > 0 && (
         <section className="mt-6">
-          <h2 className="text-xs font-medium uppercase tracking-wide text-neutral-400">
+          <h2 className="text-xs font-medium uppercase tracking-wide text-muted">
             Products
           </h2>
           <ul className="mt-2 space-y-1">
@@ -110,7 +110,7 @@ export default async function SearchPage({
 
       {brands.length > 0 && (
         <section className="mt-6">
-          <h2 className="text-xs font-medium uppercase tracking-wide text-neutral-400">Brands</h2>
+          <h2 className="text-xs font-medium uppercase tracking-wide text-muted">Brands</h2>
           <ul className="mt-2 space-y-1">
             {brands.map((b) => (
               <li key={b.id}>
@@ -125,7 +125,7 @@ export default async function SearchPage({
 
       {topics.length > 0 && (
         <section className="mt-6">
-          <h2 className="text-xs font-medium uppercase tracking-wide text-neutral-400">Topics</h2>
+          <h2 className="text-xs font-medium uppercase tracking-wide text-muted">Topics</h2>
           <ul className="mt-2 space-y-1">
             {topics.map((t) => (
               <li key={t.id}>

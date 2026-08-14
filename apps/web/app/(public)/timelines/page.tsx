@@ -20,8 +20,8 @@ export default async function TimelinesPage() {
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-12">
-      <h1 className="text-2xl font-semibold">Technology Timelines</h1>
-      <p className="mt-2 max-w-xl text-neutral-500">
+      <h1 className="font-heading text-3xl font-semibold text-foreground">Technology Timelines</h1>
+      <p className="mt-2 max-w-xl text-muted">
         Explore the evolution of technology across the TechTimeline network.
       </p>
 
@@ -33,18 +33,18 @@ export default async function TimelinesPage() {
               href={t.domain ? `https://${t.domain}` : "#"}
               target="_blank"
               rel="noreferrer"
-              className="block rounded-lg border border-neutral-200 bg-white p-5 hover:border-neutral-400"
+              className="block rounded-lg border border-white/10 bg-surface p-5 transition hover:-translate-y-0.5 hover:border-white/20"
             >
               {t.category && (
-                <span className="text-xs uppercase text-neutral-400">{t.category}</span>
+                <span className="text-xs uppercase text-muted">{t.category}</span>
               )}
               <h2 className="mt-1 font-medium">{t.name}</h2>
-              {t.description && <p className="mt-1 text-sm text-neutral-500">{t.description}</p>}
-              <span className="mt-3 inline-block text-sm text-neutral-700">Explore →</span>
+              {t.description && <p className="mt-1 text-sm text-muted">{t.description}</p>}
+              <span className="mt-3 inline-block text-sm text-foreground">Explore →</span>
             </a>
           ))
         ) : (
-          <p className="text-sm text-neutral-500">Aucune timeline active pour l&apos;instant.</p>
+          <p className="text-sm text-muted">Aucune timeline active pour l&apos;instant.</p>
         )}
       </div>
     </main>

@@ -16,7 +16,7 @@ export default async function BrandsPage() {
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-12">
-      <h1 className="text-2xl font-semibold">Brands</h1>
+      <h1 className="font-heading text-3xl font-semibold text-foreground">Brands</h1>
 
       <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         {brands?.length ? (
@@ -24,7 +24,7 @@ export default async function BrandsPage() {
             <Link
               key={b.id}
               href={`/brands/${b.slug}`}
-              className="flex flex-col items-center gap-2 rounded-lg border border-neutral-200 bg-white p-4 text-center hover:border-neutral-400"
+              className="flex flex-col items-center gap-2 rounded-lg border border-white/10 bg-surface p-4 text-center transition hover:-translate-y-0.5 hover:border-white/20"
             >
               {b.logo && (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -34,7 +34,7 @@ export default async function BrandsPage() {
             </Link>
           ))
         ) : (
-          <p className="text-sm text-neutral-500">Aucune marque pour l&apos;instant.</p>
+          <p className="text-sm text-muted">Aucune marque pour l&apos;instant.</p>
         )}
       </div>
     </main>

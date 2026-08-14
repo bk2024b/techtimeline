@@ -58,12 +58,12 @@ export default async function BrandPage({
           // eslint-disable-next-line @next/next/no-img-element
           <img src={brand.logo} alt="" className="h-12 w-12 object-contain" />
         )}
-        <h1 className="text-2xl font-semibold">{brand.name}</h1>
+        <h1 className="font-heading text-3xl font-semibold text-foreground">{brand.name}</h1>
       </div>
 
       {products?.length ? (
         <section className="mt-8">
-          <h2 className="text-sm font-medium uppercase tracking-wide text-neutral-400">
+          <h2 className="text-sm font-medium uppercase tracking-wide text-muted">
             Products
           </h2>
           <div className="mt-3 flex flex-wrap gap-2">
@@ -71,7 +71,7 @@ export default async function BrandPage({
               <Link
                 key={p.id}
                 href={`/products/${p.slug}`}
-                className="rounded-full border border-neutral-200 bg-white px-3 py-1 text-sm text-neutral-700 hover:border-neutral-400"
+                className="rounded-full border border-white/10 bg-surface px-3 py-1 text-sm text-foreground hover:border-white/25"
               >
                 {p.name}
               </Link>
@@ -81,7 +81,7 @@ export default async function BrandPage({
       ) : null}
 
       <section className="mt-10">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-neutral-400">
+        <h2 className="text-sm font-medium uppercase tracking-wide text-muted">
           Latest articles
         </h2>
         {articles?.length ? (
@@ -90,7 +90,7 @@ export default async function BrandPage({
               <Link
                 key={a.id}
                 href={`/articles/${a.slug}`}
-                className="block rounded-lg border border-neutral-200 bg-white p-4 hover:border-neutral-400"
+                className="block rounded-lg border border-white/10 bg-surface p-4 transition hover:-translate-y-0.5 hover:border-white/20"
               >
                 {a.cover_image && (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -102,13 +102,13 @@ export default async function BrandPage({
                 )}
                 <h3 className="font-medium">{a.title}</h3>
                 {a.excerpt && (
-                  <p className="mt-1 line-clamp-2 text-sm text-neutral-500">{a.excerpt}</p>
+                  <p className="mt-1 line-clamp-2 text-sm text-muted">{a.excerpt}</p>
                 )}
               </Link>
             ))}
           </div>
         ) : (
-          <p className="mt-3 text-sm text-neutral-500">Aucun article pour cette marque.</p>
+          <p className="mt-3 text-sm text-muted">Aucun article pour cette marque.</p>
         )}
       </section>
     </main>

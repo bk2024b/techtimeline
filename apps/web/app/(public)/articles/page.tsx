@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { createServerClient, getArticleIdsByCategorySlug } from "@techtimeline/database";
+import { CardLink, Badge } from "@techtimeline/ui";
 
 export const revalidate = 300;
 
@@ -18,7 +19,7 @@ export default async function ArticlesPage({
   const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
 
-  let articles: {
+  type ArticleRow = {
     id: string;
     title: string;
     slug: string;
@@ -26,15 +27,13 @@ export default async function ArticlesPage({
     cover_image: string | null;
     type: string;
     published_at: string | null;
-  }[] = [];
+  };
 
-  let categoryHasNoMatch = false;
+  let articles: ArticleRow[] = [];
 
   if (category) {
     const ids = await getArticleIdsByCategorySlug(supabase, category);
-    if (ids.length === 0) {
-      categoryHasNoMatch = true;
-    } else {
+    if (ids.length > 0) {
       let query = supabase
         .from("articles")
         .select("id, title, slug, excerpt, cover_image, type, published_at")
@@ -56,8 +55,6 @@ export default async function ArticlesPage({
     articles = data ?? [];
   }
 
-  void categoryHasNoMatch; // explicite : articles reste [] dans ce cas, rien de plus à faire
-
   const types: { value: string; label: string }[] = [
     { value: "", label: "All" },
     { value: "news", label: "News" },
@@ -67,12 +64,12 @@ export default async function ArticlesPage({
   ];
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-12">
-      <h1 className="text-2xl font-semibold">
+    <main className="mx-auto max-w-6xl px-6 py-16">
+      <h1 className="font-heading text-3xl font-semibold text-foreground">
         {category ? `Articles — ${category}` : "Latest articles"}
       </h1>
 
-      <div className="mt-4 flex gap-2">
+      <div className="mt-5 flex flex-wrap gap-2">
         {types.map((t) => {
           const params = new URLSearchParams();
           if (category) params.set("category", category);
@@ -83,10 +80,10 @@ export default async function ArticlesPage({
             <Link
               key={t.value || "all"}
               href={href}
-              className={`rounded-full border px-3 py-1 text-sm ${
+              className={`rounded-full border px-3 py-1 text-sm transition ${
                 active
-                  ? "border-neutral-900 bg-neutral-900 text-white"
-                  : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-400"
+                  ? "border-transparent bg-gradient-brand text-white"
+                  : "border-white/10 bg-surface text-muted hover:border-white/25 hover:text-foreground"
               }`}
             >
               {t.label}
@@ -96,34 +93,28 @@ export default async function ArticlesPage({
       </div>
 
       {category && (
-        <Link href="/articles" className="mt-3 inline-block text-sm text-neutral-500 hover:underline">
-          × retirer le filtre catégorie
+        <Link href="/articles" className="mt-3 inline-block text-sm text-muted hover:text-foreground">
+          × remove category filter
         </Link>
       )}
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {articles?.length ? (
+        {articles.length ? (
           articles.map((a) => (
-            <Link
-              key={a.id}
-              href={`/articles/${a.slug}`}
-              className="block rounded-lg border border-neutral-200 bg-white p-4 hover:border-neutral-400"
-            >
+            <CardLink key={a.id} href={`/articles/${a.slug}`} className="overflow-hidden">
               {a.cover_image && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={a.cover_image}
-                  alt=""
-                  className="mb-3 h-32 w-full rounded-md object-cover"
-                />
+                <img src={a.cover_image} alt="" className="h-40 w-full object-cover" />
               )}
-              <span className="text-xs uppercase text-neutral-400">{a.type}</span>
-              <h2 className="mt-1 font-medium">{a.title}</h2>
-              {a.excerpt && <p className="mt-1 line-clamp-2 text-sm text-neutral-500">{a.excerpt}</p>}
-            </Link>
+              <div className="p-4">
+                <Badge tone="neutral">{a.type}</Badge>
+                <h2 className="mt-2 font-heading font-semibold text-foreground">{a.title}</h2>
+                {a.excerpt && <p className="mt-1 line-clamp-2 text-sm text-muted">{a.excerpt}</p>}
+              </div>
+            </CardLink>
           ))
         ) : (
-          <p className="text-sm text-neutral-500">Aucun article ne correspond à ce filtre.</p>
+          <p className="text-sm text-muted">No article matches this filter.</p>
         )}
       </div>
     </main>

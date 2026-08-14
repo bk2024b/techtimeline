@@ -101,10 +101,10 @@ export default async function ArticlePage({
         // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
       />
-      <span className="text-xs uppercase text-neutral-400">{article.type}</span>
-      <h1 className="mt-1 text-3xl font-semibold">{article.title}</h1>
+      <span className="text-xs uppercase text-muted">{article.type}</span>
+      <h1 className="mt-1 font-heading text-3xl font-semibold text-foreground">{article.title}</h1>
       {article.published_at && (
-        <p className="mt-2 text-sm text-neutral-400">
+        <p className="mt-2 text-sm text-muted">
           {new Date(article.published_at).toLocaleDateString("en-US", {
             year: "numeric",
             month: "long",
@@ -127,20 +127,20 @@ export default async function ArticlePage({
           mais affiché tel quel — à améliorer hors du périmètre de cette
           phase, qui porte sur l'architecture des pages plutôt que le
           rendu éditorial. */}
-      <div className="prose prose-neutral mt-8 max-w-none whitespace-pre-wrap text-neutral-800">
+      <div className="prose prose-invert mt-8 max-w-none whitespace-pre-wrap text-foreground/90">
         {article.content}
       </div>
 
       {(categories?.length || brands?.length || products?.length || technologies?.length || topics?.length) ? (
-        <section className="mt-10 border-t border-neutral-200 pt-6">
-          <h2 className="text-xs font-medium uppercase tracking-wide text-neutral-400">Related</h2>
+        <section className="mt-10 border-t border-white/10 pt-6">
+          <h2 className="text-xs font-medium uppercase tracking-wide text-muted">Related</h2>
           <div className="mt-3 flex flex-wrap gap-2">
             {categories?.map((c: any) =>
               c.categories ? (
                 <Link
                   key={`cat-${c.categories.slug}`}
                   href={`/articles?category=${c.categories.slug}`}
-                  className="rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs text-neutral-600 hover:border-neutral-400"
+                  className="rounded-full border border-white/10 bg-surface px-3 py-1 text-xs text-muted hover:border-white/25"
                 >
                   {c.categories.name}
                 </Link>
@@ -151,7 +151,7 @@ export default async function ArticlePage({
                 <Link
                   key={`brand-${b.brands.slug}`}
                   href={`/brands/${b.brands.slug}`}
-                  className="rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs text-neutral-600 hover:border-neutral-400"
+                  className="rounded-full border border-white/10 bg-surface px-3 py-1 text-xs text-muted hover:border-white/25"
                 >
                   {b.brands.name}
                 </Link>
@@ -162,7 +162,7 @@ export default async function ArticlePage({
                 <Link
                   key={`product-${p.products.slug}`}
                   href={`/products/${p.products.slug}`}
-                  className="rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs text-neutral-600 hover:border-neutral-400"
+                  className="rounded-full border border-white/10 bg-surface px-3 py-1 text-xs text-muted hover:border-white/25"
                 >
                   {p.products.name}
                 </Link>
@@ -172,7 +172,7 @@ export default async function ArticlePage({
               t.technologies ? (
                 <span
                   key={`tech-${t.technologies.slug}`}
-                  className="rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs text-neutral-600"
+                  className="rounded-full border border-white/10 bg-surface px-3 py-1 text-xs text-muted"
                 >
                   {t.technologies.name}
                 </span>
@@ -183,7 +183,7 @@ export default async function ArticlePage({
                 <Link
                   key={`topic-${t.topics.slug}`}
                   href={`/topics/${t.topics.slug}`}
-                  className="rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs text-neutral-600 hover:border-neutral-400"
+                  className="rounded-full border border-white/10 bg-surface px-3 py-1 text-xs text-muted hover:border-white/25"
                 >
                   {t.topics.name}
                 </Link>
@@ -195,7 +195,7 @@ export default async function ArticlePage({
 
       {publications?.length ? (
         <section className="mt-6">
-          <h2 className="text-xs font-medium uppercase tracking-wide text-neutral-400">
+          <h2 className="text-xs font-medium uppercase tracking-wide text-muted">
             Also on
           </h2>
           <div className="mt-3 flex flex-wrap gap-2">
@@ -206,7 +206,7 @@ export default async function ArticlePage({
                   href={p.timelines.domain ? `https://${p.timelines.domain}` : "#"}
                   target="_blank"
                   rel="noreferrer"
-                  className="rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs text-neutral-600 hover:border-neutral-400"
+                  className="rounded-full border border-white/10 bg-surface px-3 py-1 text-xs text-muted hover:border-white/25"
                 >
                   {p.timelines.name}
                 </a>
@@ -217,8 +217,8 @@ export default async function ArticlePage({
       ) : null}
 
       {relations?.length ? (
-        <section className="mt-10 border-t border-neutral-200 pt-6">
-          <h2 className="text-xs font-medium uppercase tracking-wide text-neutral-400">
+        <section className="mt-10 border-t border-white/10 pt-6">
+          <h2 className="text-xs font-medium uppercase tracking-wide text-muted">
             Related articles
           </h2>
           <ul className="mt-3 space-y-2">
@@ -227,7 +227,7 @@ export default async function ArticlePage({
                 <li key={r.articles.slug}>
                   <Link
                     href={`/articles/${r.articles.slug}`}
-                    className="text-sm text-neutral-700 hover:underline"
+                    className="text-sm text-foreground hover:underline"
                   >
                     {r.articles.title}
                   </Link>

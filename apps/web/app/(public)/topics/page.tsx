@@ -19,7 +19,7 @@ export default async function TopicsPage() {
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-12">
-      <h1 className="text-2xl font-semibold">Topics</h1>
+      <h1 className="font-heading text-3xl font-semibold text-foreground">Topics</h1>
 
       <div className="mt-8 flex flex-wrap gap-2">
         {topics?.length ? (
@@ -27,13 +27,13 @@ export default async function TopicsPage() {
             <Link
               key={t.id}
               href={`/topics/${t.slug}`}
-              className="rounded-full border border-neutral-200 bg-white px-4 py-1.5 text-sm text-neutral-700 hover:border-neutral-400"
+              className="rounded-full border border-white/10 bg-surface px-4 py-1.5 text-sm text-foreground hover:border-white/25"
             >
               {t.name}
             </Link>
           ))
         ) : (
-          <p className="text-sm text-neutral-500">Aucun topic pour l&apos;instant.</p>
+          <p className="text-sm text-muted">Aucun topic pour l&apos;instant.</p>
         )}
       </div>
     </main>

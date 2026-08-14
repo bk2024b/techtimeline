@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { createServerClient } from "@techtimeline/database";
+import { LinkButton, CardLink, Badge } from "@techtimeline/ui";
 
 export const revalidate = 300;
 
@@ -16,7 +17,7 @@ export default async function HomePage() {
   const [{ data: latestArticles }, { data: categories }, { data: timelines }] = await Promise.all([
     supabase
       .from("articles")
-      .select("id, title, slug, excerpt, cover_image, published_at")
+      .select("id, title, slug, excerpt, cover_image, type, published_at")
       .eq("status", "published")
       .order("published_at", { ascending: false })
       .limit(6),
@@ -30,22 +31,27 @@ export default async function HomePage() {
 
   return (
     <main>
-      <section className="mx-auto max-w-5xl px-6 py-16 text-center">
-        <h1 className="text-4xl font-semibold tracking-tight">TechTimeline</h1>
-        <p className="mx-auto mt-3 max-w-xl text-neutral-500">
-          Explore the evolution of technology.
+      <section className="mx-auto max-w-4xl px-6 py-24 text-center">
+        <h1 className="font-heading text-5xl font-bold tracking-tight text-foreground sm:text-6xl">
+          The evolution of{" "}
+          <span className="text-gradient-brand">technology</span>
+        </h1>
+        <p className="mx-auto mt-4 max-w-xl text-lg text-muted">
+          Explore. Compare. Discover. Technology, through time.
         </p>
-        <Link
-          href="/timelines"
-          className="mt-6 inline-block rounded-md bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-neutral-800"
-        >
-          Explore timelines
-        </Link>
+        <div className="mt-8 flex items-center justify-center gap-3">
+          <LinkButton href="/timelines" variant="primary">
+            Explore timelines →
+          </LinkButton>
+          <LinkButton href="/articles" variant="secondary">
+            Latest articles
+          </LinkButton>
+        </div>
       </section>
 
       {categories?.length ? (
-        <section className="mx-auto max-w-5xl px-6 pb-16">
-          <h2 className="text-sm font-medium uppercase tracking-wide text-neutral-400">
+        <section className="mx-auto max-w-6xl px-6 pb-20">
+          <h2 className="text-xs font-medium uppercase tracking-wide text-muted">
             Explore by category
           </h2>
           <div className="mt-4 flex flex-wrap gap-2">
@@ -53,7 +59,7 @@ export default async function HomePage() {
               <Link
                 key={c.id}
                 href={`/articles?category=${c.slug}`}
-                className="rounded-full border border-neutral-200 bg-white px-4 py-1.5 text-sm text-neutral-700 hover:border-neutral-400"
+                className="rounded-full border border-white/10 bg-surface px-4 py-1.5 text-sm text-foreground hover:border-white/25"
               >
                 {c.name}
               </Link>
@@ -62,10 +68,10 @@ export default async function HomePage() {
         </section>
       ) : null}
 
-      <section className="mx-auto max-w-5xl px-6 pb-16">
+      <section className="mx-auto max-w-6xl px-6 pb-20">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-medium uppercase tracking-wide text-neutral-400">Latest</h2>
-          <Link href="/articles" className="text-sm text-neutral-500 hover:text-neutral-900">
+          <h2 className="text-xs font-medium uppercase tracking-wide text-muted">Latest</h2>
+          <Link href="/articles" className="text-sm text-muted hover:text-foreground">
             View all →
           </Link>
         </div>
@@ -73,34 +79,29 @@ export default async function HomePage() {
         {latestArticles?.length ? (
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {latestArticles.map((a) => (
-              <Link
-                key={a.id}
-                href={`/articles/${a.slug}`}
-                className="block rounded-lg border border-neutral-200 bg-white p-4 hover:border-neutral-400"
-              >
+              <CardLink key={a.id} href={`/articles/${a.slug}`} className="overflow-hidden">
                 {a.cover_image && (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={a.cover_image}
-                    alt=""
-                    className="mb-3 h-32 w-full rounded-md object-cover"
-                  />
+                  <img src={a.cover_image} alt="" className="h-40 w-full object-cover" />
                 )}
-                <h3 className="font-medium">{a.title}</h3>
-                {a.excerpt && (
-                  <p className="mt-1 line-clamp-2 text-sm text-neutral-500">{a.excerpt}</p>
-                )}
-              </Link>
+                <div className="p-4">
+                  <Badge tone="neutral">{a.type}</Badge>
+                  <h3 className="mt-2 font-heading font-semibold text-foreground">{a.title}</h3>
+                  {a.excerpt && (
+                    <p className="mt-1 line-clamp-2 text-sm text-muted">{a.excerpt}</p>
+                  )}
+                </div>
+              </CardLink>
             ))}
           </div>
         ) : (
-          <p className="mt-4 text-sm text-neutral-500">Aucun article publié pour l&apos;instant.</p>
+          <p className="mt-4 text-sm text-muted">Aucun article publié pour l&apos;instant.</p>
         )}
       </section>
 
       {timelines?.length ? (
-        <section className="mx-auto max-w-5xl px-6 pb-16">
-          <h2 className="text-sm font-medium uppercase tracking-wide text-neutral-400">
+        <section className="mx-auto max-w-6xl px-6 pb-24">
+          <h2 className="text-xs font-medium uppercase tracking-wide text-muted">
             Timeline Network
           </h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -110,12 +111,11 @@ export default async function HomePage() {
                 href={t.domain ? `https://${t.domain}` : "#"}
                 target="_blank"
                 rel="noreferrer"
-                className="block rounded-lg border border-neutral-200 bg-white p-4 hover:border-neutral-400"
+                className="block rounded-2xl border border-white/10 bg-surface p-5 transition hover:-translate-y-0.5 hover:border-white/20"
               >
-                <h3 className="font-medium">{t.name}</h3>
-                {t.description && (
-                  <p className="mt-1 text-sm text-neutral-500">{t.description}</p>
-                )}
+                <h3 className="font-heading font-semibold text-foreground">{t.name}</h3>
+                {t.description && <p className="mt-1 text-sm text-muted">{t.description}</p>}
+                <span className="mt-3 inline-block text-sm text-blue">Explore →</span>
               </a>
             ))}
           </div>
