@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
-import { createServerClient } from "@techtimeline/database";
+import { createServerClient, getArticleIdsByCategorySlug } from "@techtimeline/database";
 
 export const revalidate = 300;
 
@@ -18,16 +18,45 @@ export default async function ArticlesPage({
   const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
 
-  let query = supabase
-    .from("articles")
-    .select("id, title, slug, excerpt, cover_image, type, published_at")
-    .eq("status", "published")
-    .order("published_at", { ascending: false });
+  let articles: {
+    id: string;
+    title: string;
+    slug: string;
+    excerpt: string | null;
+    cover_image: string | null;
+    type: string;
+    published_at: string | null;
+  }[] = [];
 
-  if (category) query = query.contains("category_slugs", [category]);
-  if (type) query = query.eq("type", type);
+  let categoryHasNoMatch = false;
 
-  const { data: articles } = await query;
+  if (category) {
+    const ids = await getArticleIdsByCategorySlug(supabase, category);
+    if (ids.length === 0) {
+      categoryHasNoMatch = true;
+    } else {
+      let query = supabase
+        .from("articles")
+        .select("id, title, slug, excerpt, cover_image, type, published_at")
+        .eq("status", "published")
+        .in("id", ids)
+        .order("published_at", { ascending: false });
+      if (type) query = query.eq("type", type);
+      const { data } = await query;
+      articles = data ?? [];
+    }
+  } else {
+    let query = supabase
+      .from("articles")
+      .select("id, title, slug, excerpt, cover_image, type, published_at")
+      .eq("status", "published")
+      .order("published_at", { ascending: false });
+    if (type) query = query.eq("type", type);
+    const { data } = await query;
+    articles = data ?? [];
+  }
+
+  void categoryHasNoMatch; // explicite : articles reste [] dans ce cas, rien de plus à faire
 
   const types: { value: string; label: string }[] = [
     { value: "", label: "All" },

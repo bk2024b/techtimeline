@@ -8,23 +8,13 @@ import { slugify, excerptFromMarkdown } from "@techtimeline/lib";
 import { assertRole, ForbiddenError } from "@techtimeline/auth";
 import type { ArticleStatus, ContentType } from "@techtimeline/types";
 
-// Note : plus de champ "destinations" texte libre dans le formulaire
-// (remplacé par les checkboxes timelines) — la colonne legacy
-// articles.destinations est maintenant dérivée automatiquement des
-// timelines cochées, cf. deriveDestinationSlugs ci-dessous. Gardée en
-// écriture jusqu'à dépréciation complète (Phase 9).
+// Note : plus de champ "destinations" dans le formulaire (remplacé par
+// les checkboxes timelines dès la Phase 5) — la colonne legacy
+// articles.destinations, articles.category_slugs, articles.brand_slugs
+// et articles.tag_slugs ont été supprimées en base (Phase 9,
+// 0005_drop_denormalized_columns.sql). Plus aucune écriture ici.
 
 type SupabaseClient = ReturnType<typeof createServerClient>;
-
-async function slugsFor(
-  supabase: SupabaseClient,
-  table: "categories" | "brands" | "tags" | "timelines",
-  ids: string[]
-): Promise<string[]> {
-  if (ids.length === 0) return [];
-  const { data } = await supabase.from(table).select("slug").in("id", ids);
-  return (data ?? []).map((row) => row.slug as string);
-}
 
 async function syncRelations(
   supabase: SupabaseClient,
@@ -173,13 +163,6 @@ export async function createArticle(formData: FormData) {
   const topicIds = formData.getAll("topic_ids") as string[];
   const relatedIds = formData.getAll("related_ids") as string[];
 
-  const [categorySlugs, brandSlugs, tagSlugs, destinations] = await Promise.all([
-    slugsFor(supabase, "categories", categoryIds),
-    slugsFor(supabase, "brands", brandIds),
-    slugsFor(supabase, "tags", tagIds),
-    slugsFor(supabase, "timelines", timelineIds),
-  ]);
-
   const { data, error } = await supabase
     .from("articles")
     .insert({
@@ -190,15 +173,11 @@ export async function createArticle(formData: FormData) {
       type,
       status,
       author_id: user.id,
-      destinations,
       cover_image: coverImage,
       seo_title: seoTitle,
       seo_meta_description: seoMetaDescription,
       seo_canonical: seoCanonical,
       seo_og_image: seoOgImage,
-      category_slugs: categorySlugs,
-      brand_slugs: brandSlugs,
-      tag_slugs: tagSlugs,
       published_at: status === "published" ? new Date().toISOString() : null,
     })
     .select("id")
@@ -240,13 +219,6 @@ export async function updateArticle(articleId: string, formData: FormData) {
   const topicIds = formData.getAll("topic_ids") as string[];
   const relatedIds = formData.getAll("related_ids") as string[];
 
-  const [categorySlugs, brandSlugs, tagSlugs, destinations] = await Promise.all([
-    slugsFor(supabase, "categories", categoryIds),
-    slugsFor(supabase, "brands", brandIds),
-    slugsFor(supabase, "tags", tagIds),
-    slugsFor(supabase, "timelines", timelineIds),
-  ]);
-
   const { error } = await supabase
     .from("articles")
     .update({
@@ -256,15 +228,11 @@ export async function updateArticle(articleId: string, formData: FormData) {
       excerpt: excerptFromMarkdown(content),
       type,
       status,
-      destinations,
       cover_image: coverImage,
       seo_title: seoTitle,
       seo_meta_description: seoMetaDescription,
       seo_canonical: seoCanonical,
       seo_og_image: seoOgImage,
-      category_slugs: categorySlugs,
-      brand_slugs: brandSlugs,
-      tag_slugs: tagSlugs,
       published_at: status === "published" ? new Date().toISOString() : null,
     })
     .eq("id", articleId);

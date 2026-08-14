@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServiceClient } from "@techtimeline/database";
+import { createServiceClient, getArticleIdsByCategorySlug } from "@techtimeline/database";
 import { rateLimitOrNull } from "../_lib/rate-limit";
 
 export const revalidate = 300;
 
 // GET /api/articles?category=phones&destination=phonetimeline
 //
-// `destination` filtre maintenant via la table `publications` (timeline
-// slug) plutôt que l'ancien array `articles.destinations` — celui-ci
-// reste en base pour compat descendante mais n'est plus la source lue
-// ici (cf. Phase 2/9 du plan de migration).
+// `destination` filtre via la table `publications` (timeline slug).
+// `category` filtre via article_categories (jointure) — la colonne
+// dénormalisée articles.category_slugs a été supprimée en Phase 9
+// (0005_drop_denormalized_columns.sql).
 export async function GET(request: NextRequest) {
   const rateLimited = rateLimitOrNull(request);
   if (rateLimited) return rateLimited;
@@ -19,6 +19,17 @@ export async function GET(request: NextRequest) {
   const destination = searchParams.get("destination");
 
   const supabase = createServiceClient();
+
+  const categoryArticleIds = category
+    ? await getArticleIdsByCategorySlug(supabase, category)
+    : null;
+
+  // Catégorie demandée mais aucun article ne correspond : court-circuite
+  // plutôt que de laisser un .in([]) ambigu (Supabase le traiterait
+  // comme "pas de filtre" et retournerait tout, ce qui serait faux ici).
+  if (categoryArticleIds && categoryArticleIds.length === 0) {
+    return NextResponse.json([]);
+  }
 
   if (destination) {
     // Jointure via publications -> timelines, restreinte aux publications
@@ -34,8 +45,8 @@ export async function GET(request: NextRequest) {
       .eq("publications.timeline.slug", destination)
       .order("published_at", { ascending: false });
 
-    if (category) {
-      query = query.contains("category_slugs", [category]);
+    if (categoryArticleIds) {
+      query = query.in("id", categoryArticleIds);
     }
 
     const { data, error } = await query;
@@ -53,8 +64,8 @@ export async function GET(request: NextRequest) {
     .eq("status", "published")
     .order("published_at", { ascending: false });
 
-  if (category) {
-    query = query.contains("category_slugs", [category]);
+  if (categoryArticleIds) {
+    query = query.in("id", categoryArticleIds);
   }
 
   const { data, error } = await query;

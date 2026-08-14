@@ -39,7 +39,7 @@ export default async function EditArticlePage({
     supabase
       .from("articles")
       .select(
-        "id, title, content, type, status, destinations, cover_image, seo_title, seo_meta_description, seo_canonical, seo_og_image"
+        "id, title, content, type, status, cover_image, seo_title, seo_meta_description, seo_canonical, seo_og_image"
       )
       .eq("id", id)
       .single(),
@@ -80,7 +80,6 @@ export default async function EditArticlePage({
           content: article.content,
           type: article.type,
           status: article.status,
-          destinations: article.destinations,
           coverImage: article.cover_image,
           seo: {
             title: article.seo_title ?? "",
